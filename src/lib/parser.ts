@@ -3,21 +3,11 @@
  * Shared helpers used by all plugins.
  */
 
-import * as cheerio from 'cheerio';
+import { load } from 'cheerio';
 
 /** Load an HTML string into a Cheerio document. */
-export function loadHtml(html: string): cheerio.CheerioAPI {
-  return cheerio.load(html);
-}
-
-/** Extract text content from an element, trimmed. */
-export function getText(el: cheerio.Cheerio<cheerio.Element>): string {
-  return el.text().trim();
-}
-
-/** Extract an attribute from the first matching element. */
-export function getAttr(el: cheerio.Cheerio<cheerio.Element>, attr: string): string {
-  return el.attr(attr) || '';
+export function loadHtml(html: string) {
+  return load(html);
 }
 
 /** Resolve a potentially relative URL against a base. */
@@ -46,15 +36,3 @@ export function cleanText(text: string): string {
     .filter(line => line.length > 0)
     .join('\n');
 }
-
-/** Extract text from a Cheerio selection, cleaning each line. */
-export function extractContent($el: cheerio.Cheerio<cheerio.Element>): string {
-  const lines: string[] = [];
-  $el.each((_, el) => {
-    const text = $(el).text().trim();
-    if (text) lines.push(text);
-  });
-  return cleanText(lines.join('\n'));
-}
-
-const $ = cheerio.load(''); // for type inference

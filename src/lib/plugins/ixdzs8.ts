@@ -34,7 +34,7 @@ export class Ixdzs8Plugin implements NovelSourcePlugin {
       const $el = $(el);
       const link = $el.find('h3.bname a');
       const href = this.abs(link.attr('href'));
-      const m = href.match(/\/read\/(\d+)//);
+      const m = href.match(/\/read\/(\d+)/);
       if (m) {
         items.push({
           bookId: m[1],
@@ -59,7 +59,7 @@ export class Ixdzs8Plugin implements NovelSourcePlugin {
       const $el = $(el);
       const link = $el.find('h3.bname a');
       const href = this.abs(link.attr('href'));
-      const m = href.match(/\/read\/(\d+)//);
+      const m = href.match(/\/read\/(\d+)/);
       if (m) {
         items.push({
           bookId: m[1],

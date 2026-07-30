@@ -1,4 +1,14 @@
 export default function Home() {
+  const sourceRows: [string, string, string, boolean, boolean][] = [
+    ['ixdzs8', 'Aixdzs', 'UTF-8', true, true],
+    ['xbiquge', 'XBiquge', 'UTF-8', true, true],
+    ['biquge_company', 'BiQuGe.company', 'UTF-8', true, true],
+    ['ttkan', 'TTKan', 'UTF-8', true, true],
+    ['shuhaige', 'ShuHaiGe', 'UTF-8', true, true],
+    ['quanben5', 'Quanben5', 'Big5', false, true],
+    ['rayforboe', 'Rayforboe', 'UTF-8', true, true],
+  ];
+
   return (
     <html lang="en">
       <head>
@@ -41,15 +51,7 @@ export default function Home() {
         <table>
           <thead><tr><th>ID</th><th>Name</th><th>Charset</th><th>Search</th><th>Catalog</th></tr></thead>
           <tbody>
-            {[
-              ['ixdzs8', 'Aixdzs', 'UTF-8', true, true],
-              ['xbiquge', 'XBiquge', 'UTF-8', true, true],
-              ['biquge_company', 'BiQuGe.company', 'UTF-8', true, true],
-              ['ttkan', 'TTKan', 'UTF-8', true, true],
-              ['shuhaige', 'ShuHaiGe', 'UTF-8', true, true],
-              ['quanben5', 'Quanben5', 'Big5', false, true],
-              ['rayforboe', 'Rayforboe', 'UTF-8', true, true],
-            ].map(([id, name, cs, srch, cat]) => (
+            {sourceRows.map(([id, name, cs, srch, cat]) => (
               <tr key={id}><td><code>{id}</code></td><td>{name}</td><td>{cs}</td>
                 <td><span className={"badge " + (srch ? "green" : "red")}>{srch ? 'Yes' : 'No'}</span></td>
                 <td><span className="badge green">Yes</span></td></tr>
@@ -316,7 +318,7 @@ curl -s https://your-app.vercel.app/api/shuhaige/novel/1397/152060484 | jq '.dat
         <table>
           <thead><tr><th>Source</th><th>bookId Format</th><th>chapterId Format</th><th>Example</th></tr></thead>
           <tbody>
-            <tr><td>ixdzs8</td><td>numeric</td><td>ordernum (p{N})</td><td><code>1</code> / <code>2</code></td></tr>
+            <tr><td>ixdzs8</td><td>numeric</td><td>ordernum (p{'{'}N{'}'})</td><td><code>1</code> / <code>2</code></td></tr>
             <tr><td>xbiquge</td><td>numeric (site ID)</td><td>numeric</td><td><code>8697</code> / <code>272602</code></td></tr>
             <tr><td>biquge_company</td><td>numeric</td><td>numeric</td><td><code>98405</code> / <code>30845698</code></td></tr>
             <tr><td>ttkan</td><td>slug string</td><td>numeric</td><td><code>wanxiangzhiwang-tiancantudou</code> / <code>1</code></td></tr>
