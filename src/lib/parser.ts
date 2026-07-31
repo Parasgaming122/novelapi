@@ -21,9 +21,24 @@ export function resolveUrl(href: string | undefined | null, base: string): strin
   return base + '/' + href;
 }
 
-/** Clean chapter text: remove ads, page markers, empty lines. */
-export function cleanText(text: string): string {
+/** Decode common HTML entities to plain text. */
+function decodeEntities(text: string): string {
   return text
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&ensp;/gi, ' ')
+    .replace(/&emsp;/gi, '  ')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&amp;/gi, '&')
+    .replace(/&quot;/gi, '"')
+    .replace(/&apos;/gi, "'")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(Number('0x' + h)));
+}
+
+/** Clean chapter text: remove ads, page markers, empty lines, decode HTML entities. */
+export function cleanText(text: string): string {
+  return decodeEntities(text)
     .replace(/\s*第\(\d+\/\d+\)页\s*/g, '')
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/<style[\s\S]*?<\/style>/gi, '')

@@ -59,6 +59,11 @@ function isChallenge(body: string, status: number): boolean {
     'hcaptcha.com',
     'g-recaptcha',
     'turnstile',
+    // Custom site-level JS challenges
+    '\u6b63\u5728\u9a8c\u8bc1\u6d4f\u89c8\u5668',     // 正在验证浏览器 (ixdzs8)
+    '\u5b89\u5168\u9a8c\u8bc1',                   // 安全验证 (generic)
+    'window.location.href.*challenge',         // JS redirect challenges
+    '\u8bf7\u7a0d\u7b49',                     // 请稍等 (generic wait)
   ];
   return patterns.some(p => body.toLowerCase().includes(p.toLowerCase()));
 }
@@ -131,10 +136,9 @@ export async function smartFetch(
   const domain = extractDomain(url);
   const maxRetries = options.maxRetries ?? 2;
   const timeout = options.timeout ?? 15000;
-  const charset = (options.charset || 'UTF-8').toUpperCase();
-  const isGBK = charset.includes('GBK') || charset.includes('GB2312');
-  const isBig5 = charset.includes('BIG5') || charset.includes('TRADITIONAL');
-  const needsIconv = isGBK || isBig5;
+  const declaredCharset = (options.charset || 'UTF-8').toUpperCase();
+  const isGBK = declaredCharset.includes('GBK') || declaredCharset.includes('GB2312');
+  const isBig5 = declaredCharset.includes('BIG5') || declaredCharset.includes('TRADITIONAL');
 
   await enforceRateLimit(domain);
 
@@ -209,11 +213,16 @@ export async function smartFetch(
       const ctIsGBK = ctCharset?.includes('GBK') || ctCharset?.includes('GB2312');
       const ctIsBig5 = ctCharset?.includes('BIG5');
 
+      // Content-Type charset takes priority over plugin-declared charset
+      const useGBK = ctIsGBK || (isGBK && !ctCharset);
+      const useBig5 = ctIsBig5 || (isBig5 && !ctCharset);
+      const needsIconv = useGBK || useBig5;
+
       let body: string;
-      if (needsIconv || ctIsGBK || ctIsBig5) {
+      if (needsIconv) {
         const arrayBuffer = await res.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
-        body = iconv.decode(buffer, (isGBK || ctIsGBK) ? 'gbk' : 'big5');
+        body = iconv.decode(buffer, useGBK ? 'gbk' : 'big5');
       } else {
         body = await res.text();
       }

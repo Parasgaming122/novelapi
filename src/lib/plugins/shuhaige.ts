@@ -25,22 +25,32 @@ export class ShuHaiGePlugin implements NovelSourcePlugin {
 
   // -- Catalog -------------------------------------------------
   async getCatalog(page = 1): Promise<CatalogResult> {
-    const res = await smartFetch(`${BASE}/shuku/0_0_0_${page}.html`);
+    const url = page === 1 ? `${BASE}/shuku/` : `${BASE}/shuku/0_0_0_${page}.html`;
+    const res = await smartFetch(url);
     if (!res.success) return { success: false, items: [], error: res.error };
 
     const $ = cheerio.load(res.body);
     const items: NovelItem[] = [];
     const seen = new Set<string>();
 
-    $('a[href*="/shu_"]').each((_, el) => {
-      const $a = $(el);
-      const href = this.abs($a.attr('href'));
+    // Each <li> has: <a href="/shu_ID.html"><img ... alt="TITLE"></a>
+    //                <p class="bookname"><a href="/ID/">TITLE</a></p>
+    $('ul.list > li').each((_, el) => {
+      const $li = $(el);
+      const $coverLink = $li.find('a[href*="/shu_"]').first();
+      const href = this.abs($coverLink.attr('href'));
       const m = href.match(/\/shu_(\d+)\.html$/);
       if (!m || seen.has(m[1])) return;
       seen.add(m[1]);
+      // Title from <p class="bookname"><a> or from <img alt>
+      const title = $li.find('.bookname a').first().text().trim()
+        || $coverLink.find('img').first().attr('alt')?.trim()
+        || '';
+      const coverUrl = this.abs($coverLink.find('img').first().attr('src'));
       items.push({
         bookId: m[1],
-        title: $a.text().trim(),
+        title,
+        coverUrl: coverUrl || undefined,
         bookUrl: href,
       });
     });
@@ -110,12 +120,17 @@ export class ShuHaiGePlugin implements NovelSourcePlugin {
 
     const $ = cheerio.load(res.body);
     const items: ChapterItem[] = [];
-    $(`a[href*="/${bookId}/"]`).each((_, el) => {
+    // Match hrefs BEFORE abs() to keep relative URLs for regex
+    $(`a[href^="/${bookId}/"][href$=".html"]`).each((_, el) => {
       const $a = $(el);
-      const href = this.abs($a.attr('href'));
-      const m = href.match(new RegExp(`^/${bookId}/(\\d+)\\.html$`));
+      const rawHref = $a.attr('href') || '';
+      const m = rawHref.match(new RegExp(`^/${bookId}/(\\d+)\\.html$`));
       if (!m) return;
-      items.push({ chapterId: m[1], title: $a.text().trim(), chapterUrl: href });
+      items.push({
+        chapterId: m[1],
+        title: $a.text().trim(),
+        chapterUrl: this.abs(rawHref),
+      });
     });
     return { success: true, items };
   }

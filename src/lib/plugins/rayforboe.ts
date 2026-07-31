@@ -96,7 +96,7 @@ export class RayforboePlugin implements NovelSourcePlugin {
     const items: ChapterItem[] = [];
     const seen = new Set<string>();
 
-    $(`a[href*="/${slug}/"][href$=number]"]`).each((_, el) => {
+    $(`a[href^="/${slug}/"]`).each((_, el) => {
       const $a = $(el);
       const href = this.abs($a.attr('href'));
       const m = href.match(new RegExp(`^${BASE}/${slug}/(\\d+)$`));

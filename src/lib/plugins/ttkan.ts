@@ -91,13 +91,14 @@ export class TTKanPlugin implements NovelSourcePlugin {
     const chapters = await this.getChapterList(novelId);
 
     // Title from h1, cover from og:image meta or amp-img
+    // Note: Vue/Nuxt SSR uses name="og:*" instead of property="og:*"
     const title = $('h1').first().text().trim()
-      || $('meta[property="og:novel:book_name"]').attr('content')
+      || $('meta[property="og:novel:book_name"], meta[name="og:novel:book_name"]').attr('content')
       || '';
-    const coverSrc = $('meta[property="og:image"]').attr('content')
+    const coverSrc = $('meta[property="og:image"], meta[name="og:image"]').attr('content')
       || $('amp-img').first().attr('src')
       || undefined;
-    const desc = $('meta[property="og:description"]').attr('content')
+    const desc = $('meta[property="og:description"], meta[name="og:description"]').attr('content')
       || $('.description, .book-intro').first().text().trim()
       || undefined;
 

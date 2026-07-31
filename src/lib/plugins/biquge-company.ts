@@ -94,11 +94,13 @@ export class BiQuGeCompanyPlugin implements NovelSourcePlugin {
 
     const $ = cheerio.load(res.body);
     const items: ChapterItem[] = [];
+    const seen = new Set<string>();
     $('dl dd a[href*="/read/"]').each((_, el) => {
       const $a = $(el);
       const href = this.abs($a.attr('href'));
       const m = href.match(/\/read\/(\d+)\/(\d+)\.html$/);
-      if (!m) return;
+      if (!m || seen.has(m[2])) return;
+      seen.add(m[2]);
       items.push({ chapterId: m[2], title: $a.text().trim(), chapterUrl: href });
     });
     return { success: true, items };

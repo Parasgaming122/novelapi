@@ -64,7 +64,7 @@ export class Ixdzs8Plugin implements NovelSourcePlugin {
         items.push({
           bookId: m[1],
           title: link.text().trim(),
-          coverUrl: this.abs($el.find('.n-img img').attr('src')),
+          coverUrl: this.abs($el.find('.l-img img, .n-img img').first().attr('src')),
           bookUrl: href,
         });
       }
@@ -74,19 +74,31 @@ export class Ixdzs8Plugin implements NovelSourcePlugin {
 
   // ─── Novel Info ───────────────────────────────────────
   async getNovelInfo(bookId: string): Promise<NovelInfoResult> {
-    // p1 = detail page; chapters come from API
-    const res = await smartFetch(`${BASE}/read/${bookId}/p1.html`);
-    if (!res.success) return { success: false, error: res.error };
-
-    const $ = cheerio.load(res.body);
     const chapters = await this.getChapterList(bookId);
 
+    // Try the detail page; if challenged, return what we have from chapter API
+    const res = await smartFetch(`${BASE}/read/${bookId}/p1.html`);
+    if (!res.success || !res.body || res.body.length < 500) {
+      // Challenge page or empty — return with empty title/cover but include chapters
+      return {
+        success: true,
+        novel: {
+          bookId,
+          title: chapters.items[0]?.title ? chapters.items[0].title.replace(/^(第\d+章\s*)/, '') + ' (ixdzs8)' : '',
+          coverUrl: undefined,
+          description: undefined,
+          chapters: chapters.items,
+        },
+      };
+    }
+
+    const $ = cheerio.load(res.body);
     return {
       success: true,
       novel: {
         bookId,
         title: $('h1.bname, h1.title, .d_info h1, h1').first().text().trim(),
-        coverUrl: this.abs($('meta[property="og:image"]').attr('content')) || this.abs($('.n-img img').first().attr('src')),
+        coverUrl: this.abs($('meta[property="og:image"]').attr('content')) || this.abs($('.l-img img, .n-img img').first().attr('src')),
         description: $('#intro, .intro, p#intro').first().text().trim() || undefined,
         chapters: chapters.items,
       },

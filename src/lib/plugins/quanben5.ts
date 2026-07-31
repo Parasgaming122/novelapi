@@ -14,7 +14,7 @@ export class Quanben5Plugin implements NovelSourcePlugin {
     name: 'Quanben5',
     baseUrl: BASE,
     language: 'zh',
-    charset: 'Big5',
+    charset: 'UTF-8',
     hasSearch: false,
     hasCatalog: true,
   };
@@ -25,7 +25,7 @@ export class Quanben5Plugin implements NovelSourcePlugin {
 
   // -- Catalog (category page) ---------------------------------
   async getCatalog(page = 1): Promise<CatalogResult> {
-    const res = await smartFetch(`${BASE}/category/${page}.html`, { charset: 'big5' });
+    const res = await smartFetch(`${BASE}/category/${page}.html`);
     if (!res.success) return { success: false, items: [], error: res.error };
 
     const $ = cheerio.load(res.body);
@@ -53,7 +53,7 @@ export class Quanben5Plugin implements NovelSourcePlugin {
 
   // -- Novel Info ---------------------------------------------
   async getNovelInfo(slug: string): Promise<NovelInfoResult> {
-    const res = await smartFetch(`${BASE}/n/${slug}/`, { charset: 'big5' });
+    const res = await smartFetch(`${BASE}/n/${slug}/`);
     if (!res.success) return { success: false, error: res.error };
 
     const $ = cheerio.load(res.body);
@@ -74,7 +74,7 @@ export class Quanben5Plugin implements NovelSourcePlugin {
   // -- Chapter List (SEPARATE page) ----------------------------
   async getChapterList(slug: string): Promise<ChapterListResult> {
     const url = `${BASE}/n/${slug}/xiaoshuo.html`;
-    const res = await smartFetch(url, { charset: 'big5' });
+    const res = await smartFetch(url);
     if (!res.success) return { success: false, items: [], error: res.error };
 
     const $ = cheerio.load(res.body);
@@ -92,7 +92,7 @@ export class Quanben5Plugin implements NovelSourcePlugin {
   // -- Chapter Text -------------------------------------------
   async getChapterText(slug: string, chapterId: string): Promise<ChapterTextResult> {
     const url = `${BASE}/n/${slug}/${chapterId}.html`;
-    const res = await smartFetch(url, { charset: 'big5' });
+    const res = await smartFetch(url);
     if (!res.success) return { success: false, error: res.error };
 
     const $ = cheerio.load(res.body);
