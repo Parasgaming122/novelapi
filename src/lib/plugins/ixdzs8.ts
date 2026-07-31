@@ -39,8 +39,8 @@ export class Ixdzs8Plugin implements NovelSourcePlugin {
         items.push({
           bookId: m[1],
           title: link.text().trim(),
-          coverUrl: this.abs($el.find('.n-img img, .d_img img').attr('src')),
-          author: $el.find('.bauthor, .author').text().trim() || undefined,
+          coverUrl: this.abs($el.find('.l-img img').attr('src')),
+          author: $el.find('.bauthor a, .bauthor').text().trim() || undefined,
           bookUrl: href,
         });
       }
@@ -86,7 +86,7 @@ export class Ixdzs8Plugin implements NovelSourcePlugin {
       novel: {
         bookId,
         title: $('h1.bname, h1.title, .d_info h1, h1').first().text().trim(),
-        coverUrl: this.abs($('.n-img img, .d_img img').first().attr('src')),
+        coverUrl: this.abs($('meta[property="og:image"]').attr('content')) || this.abs($('.n-img img').first().attr('src')),
         description: $('#intro, .intro, p#intro').first().text().trim() || undefined,
         chapters: chapters.items,
       },

@@ -79,8 +79,8 @@ export class BiQuGeCompanyPlugin implements NovelSourcePlugin {
       success: true,
       novel: {
         bookId,
-        title: $('h1').first().text().trim(),
-        coverUrl: this.abs($('#fmimg img, .book-info img, .cover img').first().attr('src')),
+        title: $('h1.booktitle, h1').first().text().trim(),
+        coverUrl: this.abs($('img.thumbnail').attr('src')),
         description: $('#intro, .intro, .book-intro').first().text().trim() || undefined,
         chapters: chapters.items,
       },

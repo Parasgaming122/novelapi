@@ -76,11 +76,28 @@ export class ShuHaiGePlugin implements NovelSourcePlugin {
     const $ = cheerio.load(res.body);
     const chapters = await this.getChapterList(bookId);
 
+    // Title: h1 in .header, or og:novel:book_name meta
+    const title = $('.header h1').first().text().trim()
+      || $('meta[property="og:novel:book_name"]').attr('content')
+      || $('h1').first().text().trim();
+
+    // Cover: div.detail > img, or og:image meta
+    const coverSrc = $('.detail img').first().attr('src')
+      || $('meta[property="og:image"]').attr('content')
+      || undefined;
+
+    // Description: .intro div, or og:description meta
+    const description = $('.intro').first().text().trim()
+      || $('meta[property="og:description"]').attr('content')
+      || undefined;
+
     return {
       success: true,
       novel: {
         bookId,
-        title: $('h1').first().text().trim(),
+        title,
+        coverUrl: this.abs(coverSrc),
+        description,
         chapters: chapters.items,
       },
     };

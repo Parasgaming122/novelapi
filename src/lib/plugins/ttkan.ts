@@ -23,6 +23,13 @@ export class TTKanPlugin implements NovelSourcePlugin {
     return resolveUrl(href, BASE);
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private imgSrc($el: any): string | undefined {
+    return $el.find('img').first().attr('src')
+      ?? $el.find('amp-img').first().attr('src')
+      ?? undefined;
+  }
+
   // -- Catalog (Rank page) --------------------------------------
   async getCatalog(page = 1): Promise<CatalogResult> {
     const res = await smartFetch(`${BASE}/novel/rank?page=${page}`);
@@ -30,16 +37,25 @@ export class TTKanPlugin implements NovelSourcePlugin {
 
     const $ = cheerio.load(res.body);
     const items: NovelItem[] = [];
-    $('.rank_list a[href*="/novel/chapters/"]').each((_, el) => {
-      const $a = $(el);
-      const href = this.abs($a.attr('href'));
+    // Structure: div.rank_list > div.pure-u-{cover} + div.pure-u-{info}
+    // Cover is in a pure-u div containing amp-img, title is h2 in the sibling div
+    $('.rank_list .pure-u-xl-1-5, .rank_list .pure-u-lg-1-4, .rank_list .pure-u-md-1-3').each((_, el) => {
+      const $cover = $(el);
+      const $info = $cover.next('div');
+      const link = $cover.find('a[href*="/novel/chapters/"]').first();
+      const href = this.abs(link.attr('href'));
+      if (!href) return;
       const slug = href.split('/novel/chapters/')[1]?.replace(/\/.*/, '') ?? '';
-      items.push({
-        bookId: slug,
-        title: $a.text().trim(),
-        coverUrl: this.abs($a.closest('.rank_list > div').find('img').first().attr('src')),
-        bookUrl: href,
-      });
+      const coverSrc = $cover.find('amp-img').first().attr('src') || $cover.find('img').first().attr('src');
+      const title = $info.find('h2').first().text().trim() || link.attr('title') || '';
+      if (slug) {
+        items.push({
+          bookId: slug,
+          title,
+          coverUrl: this.abs(coverSrc),
+          bookUrl: href,
+        });
+      }
     });
     return { success: true, items };
   }
@@ -51,17 +67,17 @@ export class TTKanPlugin implements NovelSourcePlugin {
 
     const $ = cheerio.load(res.body);
     const items: NovelItem[] = [];
+    // Search results use .novel_cell divs (may be SSR or JS-rendered)
+    // Fallback: try to find any links to /novel/chapters/
     $('.novel_cell').each((_, el) => {
       const $cell = $(el);
       const link = $cell.find('a[href*="/novel/chapters/"]').first();
       const href = this.abs(link.attr('href'));
       const slug = href.split('/novel/chapters/')[1]?.replace(/\/.*/, '') ?? '';
-      items.push({
-        bookId: slug,
-        title: link.text().trim() || $cell.find('.book_name').text().trim(),
-        coverUrl: this.abs($cell.find('img').first().attr('src')),
-        bookUrl: href,
-      });
+      if (!slug) return;
+      const coverSrc = this.imgSrc($cell);
+      const title = $cell.find('h3 a').text().trim() || link.text().trim() || $cell.find('.book_name').text().trim();
+      items.push({ bookId: slug, title, coverUrl: this.abs(coverSrc), bookUrl: href });
     });
     return { success: true, items };
   }
@@ -74,13 +90,24 @@ export class TTKanPlugin implements NovelSourcePlugin {
     const $ = cheerio.load(res.body);
     const chapters = await this.getChapterList(novelId);
 
+    // Title from h1, cover from og:image meta or amp-img
+    const title = $('h1').first().text().trim()
+      || $('meta[property="og:novel:book_name"]').attr('content')
+      || '';
+    const coverSrc = $('meta[property="og:image"]').attr('content')
+      || $('amp-img').first().attr('src')
+      || undefined;
+    const desc = $('meta[property="og:description"]').attr('content')
+      || $('.description, .book-intro').first().text().trim()
+      || undefined;
+
     return {
       success: true,
       novel: {
         bookId: novelId,
-        title: $('h1').first().text().trim(),
-        coverUrl: this.abs($('img.book-cover, .cover img').first().attr('src')),
-        description: $('.description, .book-intro').first().text().trim() || undefined,
+        title,
+        coverUrl: this.abs(coverSrc),
+        description: desc,
         chapters: chapters.items,
       },
     };
